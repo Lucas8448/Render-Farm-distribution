@@ -21,7 +21,8 @@ def index():
 @socketio.on('connect')
 def ws_connect():
     print('WebSocket connected')
-    container = client.containers.run("ubuntu", detach=True)
+    container = client.containers.run(
+        "ubuntu", detach=True, command="tail -f /dev/null")
     session_id = request.sid
     containers[session_id] = container
     print(f'Started container: {container.id} for session: {session_id}')
