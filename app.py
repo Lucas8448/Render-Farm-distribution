@@ -18,19 +18,28 @@ def index():
     return render_template('index.html')
 
 
-@socketio.on('connect')
-def ws_connect():
-    print('WebSocket connected')
-    container = client.containers.run(
-        "ubuntu", detach=True, command="tail -f /dev/null")
+@socketio.on('start_container')
+def start_container(data):
+    image = data['image']
+    print(f'Request to start {image} container')
+    if image not in ['debian', 'bash', 'ubuntu']:
+        print(f'Invalid container image: {image}')
+        return
+
     session_id = request.sid
+    if session_id in containers:
+        print(f'Container already running for session: {session_id}')
+        return
+
+    container = client.containers.run(
+        image, detach=True, command="tail -f /dev/null")
     containers[session_id] = container
-    print(f'Started container: {container.id} for session: {session_id}')
+    print(
+        f'Started {image} container: {container.id} for session: {session_id}')
 
 
-@socketio.on('disconnect')
-def ws_disconnect():
-    print('WebSocket disconnected')
+@socketio.on('stop_container')
+def stop_container():
     session_id = request.sid
     if session_id in containers:
         container = containers[session_id]
